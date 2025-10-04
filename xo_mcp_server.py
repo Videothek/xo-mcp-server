@@ -1,272 +1,153 @@
 #!/usr/bin/env python3
-"""XenOrchMCP MCP Server - manage Xen Orchestra via REST API"""
+# This shebang line tells the system to use Python 3 to run this script.
+# You can leave it as-is or change to a specific Python path if needed.
+
+"""
+Simple Xen Orchestra MCP Server - Manage VMs and Backups
+"""
+# Module docstring describing the purpose of the script. Keep it short and single-line for MCP compliance.
 
 import os
+# Provides access to environment variables and filesystem paths. Modify if you want to read configs from files or environment.
+
 import sys
+# Provides access to system-level functions, such as exiting the script or redirecting streams.
+
 import logging
-import json
+# Standard Python logging library. Used to print info, warning, and error messages to stderr.
+
 from datetime import datetime, timezone
+# Provides date and time utilities. Could be used for timestamps in logging or API calls.
+
 import httpx
+# HTTP client library used to make requests to Xen Orchestra API. You can swap for requests or aiohttp if preferred.
+
 from mcp.server.fastmcp import FastMCP
+# Imports the FastMCP server class, which is the backbone of an MCP server.
 
-# Configure logging to stderr
+# ================= Logging Configuration =================
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    stream=sys.stderr,
+    level=logging.INFO,  # Set logging level. Change to DEBUG for verbose output.
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Customize how logs appear.
+    stream=sys.stderr  # Logs are sent to standard error.
 )
-logger = logging.getLogger("XenOrchMCP-server")
+logger = logging.getLogger("xo_mcp_server")  # Creates a logger specifically for this server. You can change the name.
 
-# Initialize MCP server - NO prompt parameter
-mcp = FastMCP("XenOrchMCP")
+# ================= Initialize MCP Server =================
+mcp = FastMCP("xo_mcp_server")
+# Initializes the MCP server instance.
+# The string is the server's name, which shows up in Claude Desktop.
+# Do NOT add a 'prompt' parameter, it breaks MCP compliance.
 
-# Configuration from environment variables
-XOA_URL = os.environ.get("XOA_URL", "").rstrip("/")
-XOA_TOKEN = os.environ.get("XOA_TOKEN", "")
-DEFAULT_TIMEOUT = 15.0
+# ================= Configuration =================
+# Place any constants, URLs, or secrets here.
+# Example: XO API token from Docker secrets or environment variables
+API_TOKEN = os.environ.get("XO_API_TOKEN", "")
+# Reads the Xen Orchestra API token from an environment variable.
+# You can modify this line to read from a file, config, or secret manager.
 
-# Utility: build base API URL
-def _api_base() -> str:
-    """Return the base REST API URL"""
-    if not XOA_URL.strip():
-        return ""
-    return f"{XOA_URL}/rest/v0"
+XO_BASE_URL = os.environ.get("XO_BASE_URL", "http://localhost:80")
+# Base URL for your Xen Orchestra instance.
+# Change to match your Xen Orchestra hostname or IP.
 
-# Utility: create async client with cookie auth
-def _client():
-    """Create an httpx AsyncClient configured for Xen Orchestra"""
-    cookies = {}
-    if XOA_TOKEN.strip():
-        cookies["authenticationToken"] = XOA_TOKEN.strip()
-    headers = {"Accept": "application/json"}
-    base = _api_base()
-    if base:
-        return httpx.AsyncClient(base_url=base, headers=headers, cookies=cookies, timeout=DEFAULT_TIMEOUT)
-    return httpx.AsyncClient(headers=headers, cookies=cookies, timeout=DEFAULT_TIMEOUT)
+# ================= Utility Functions =================
+def format_response(success, message):
+    """Helper function to consistently format MCP responses."""
+    return f"✅ {message}" if success else f"❌ {message}"
+# You can modify this to include more structured JSON or additional emojis.
 
-# === MCP TOOLS ===
+# ================= MCP Tools =================
+# Each MCP tool is a function decorated with @mcp.tool()
+# It must return a string and have single-line docstrings.
 
 @mcp.tool()
-async def list_vms(limit: str = "50", fields: str = "name_label,power_state") -> str:
-    """List VMs with optional limit and fields"""
-    logger.info("list_vms called")
-    if not XOA_URL.strip() or not XOA_TOKEN.strip():
-        return "❌ Error: XOA_URL and XOA_TOKEN environment variables must be set"
+async def list_vms():
+    """List all VMs in Xen Orchestra."""
+    logger.info("Fetching VMs from Xen Orchestra")
     try:
-        limit_int = int(limit) if str(limit).strip() else 50
-    except Exception:
-        return f"❌ Error: Invalid limit value: {limit}"
-    params = {}
-    if str(fields).strip():
-        params["fields"] = str(fields).strip()
-    params["limit"] = str(limit_int)
-    try:
-        async with _client() as client:
-            resp = await client.get("/vms", params=params)
-            resp.raise_for_status()
-            data = resp.json()
-            # present a compact readable list
-            out_lines = ["📊 VMs:"]
-            if isinstance(data, list):
-                for i, item in enumerate(data[:limit_int], start=1):
-                    if isinstance(item, dict):
-                        name = item.get("name_label", "<no name>")
-                        state = item.get("power_state", "unknown")
-                        href = item.get("href", "")
-                        out_lines.append(f"- {i}. {name} (state: {state}) {href}")
-                    else:
-                        out_lines.append(f"- {i}. {item}")
-            else:
-                out_lines.append(f"⚠️ Unexpected response shape: {json.dumps(data)[:500]}")
-            return "\n".join(out_lines)
+        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        # API authorization header. Change to 'Basic' if you use username/password auth.
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(f"{XO_BASE_URL}/api/v1/vms", headers=headers)
+            # Sends GET request to the Xen Orchestra API endpoint for VMs.
+            response.raise_for_status()  # Raises exception if status code >=400
+            data = response.json()  # Converts response body to JSON
+            # Format VM list into readable string
+            vms = [f"- {vm.get('name_label', 'Unnamed')} ({vm.get('id')})" for vm in data.get('data', [])]
+            return f"📊 VMs:\n" + "\n".join(vms) if vms else "📊 No VMs found."
     except httpx.HTTPStatusError as e:
-        return f"❌ API Error: {e.response.status_code} - {e.response.text[:500]}"
+        logger.error(f"HTTP Error: {e.response.status_code}")
+        return f"❌ HTTP Error: {e.response.status_code}"
     except Exception as e:
-        logger.error("list_vms error", exc_info=True)
+        logger.error(f"Error listing VMs: {e}")
         return f"❌ Error: {str(e)}"
+# You can modify the endpoint or formatting here, e.g., add filters, sorting, or more fields.
 
 @mcp.tool()
-async def create_vm(payload: str = "") -> str:
-    """Create a VM using JSON payload (POST /vms)"""
-    logger.info("create_vm called")
-    if not XOA_URL.strip() or not XOA_TOKEN.strip():
-        return "❌ Error: XOA_URL and XOA_TOKEN environment variables must be set"
-    if not str(payload).strip():
-        return "❌ Error: payload is required and must be a JSON string"
+async def create_vm(name: str = "", template_id: str = ""):
+    """Create a new VM from a template."""
+    if not name.strip() or not template_id.strip():
+        return "❌ Error: Both 'name' and 'template_id' are required"
+    logger.info(f"Creating VM: {name} from template {template_id}")
     try:
-        body = json.loads(payload)
+        payload = {"name_label": name, "template": template_id}
+        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(f"{XO_BASE_URL}/api/v1/vms", headers=headers, json=payload)
+            response.raise_for_status()
+            vm = response.json()
+            return f"✅ VM created: {vm.get('name_label')} ({vm.get('id')})"
     except Exception as e:
-        return f"❌ Error: payload is not valid JSON: {str(e)}"
-    try:
-        async with _client() as client:
-            resp = await client.post("/vms", json=body)
-            resp.raise_for_status()
-            data = resp.json()
-            return f"✅ Success: VM creation request accepted\n- Response: {json.dumps(data)[:1000]}"
-    except httpx.HTTPStatusError as e:
-        return f"❌ API Error: {e.response.status_code} - {e.response.text[:1000]}"
-    except Exception as e:
-        logger.error("create_vm error", exc_info=True)
+        logger.error(f"Error creating VM: {e}")
         return f"❌ Error: {str(e)}"
+# Modify payload to include CPU, RAM, or disk parameters as needed.
 
 @mcp.tool()
-async def delete_vm(vm_id: str = "") -> str:
-    """Delete a VM by its UUID or href"""
-    logger.info("delete_vm called")
-    if not XOA_URL.strip() or not XOA_TOKEN.strip():
-        return "❌ Error: XOA_URL and XOA_TOKEN environment variables must be set"
-    if not str(vm_id).strip():
-        return "❌ Error: vm_id is required"
-    vm_path = str(vm_id).strip()
-    # If user passed full href, strip leading slash and /rest/v0 if present
-    if vm_path.startswith("/rest/v0/"):
-        vm_path = vm_path.replace("/rest/v0/", "")
-    if vm_path.startswith("/"):
-        vm_path = vm_path[1:]
+async def delete_vm(vm_id: str = ""):
+    """Delete a VM by its ID."""
+    if not vm_id.strip():
+        return "❌ Error: 'vm_id' is required"
+    logger.info(f"Deleting VM: {vm_id}")
     try:
-        async with _client() as client:
-            resp = await client.delete(f"/{vm_path}")
-            if resp.status_code in (200, 204):
-                return f"✅ Success: VM {vm_id} deleted (HTTP {resp.status_code})"
-            else:
-                # raise_for_status to provide details
-                resp.raise_for_status()
-    except httpx.HTTPStatusError as e:
-        return f"❌ API Error: {e.response.status_code} - {e.response.text[:1000]}"
+        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.delete(f"{XO_BASE_URL}/api/v1/vms/{vm_id}", headers=headers)
+            response.raise_for_status()
+            return f"✅ VM {vm_id} deleted successfully"
     except Exception as e:
-        logger.error("delete_vm error", exc_info=True)
+        logger.error(f"Error deleting VM: {e}")
         return f"❌ Error: {str(e)}"
+# You could add a confirmation flag before deletion for safety.
 
 @mcp.tool()
-async def modify_vm(vm_id: str = "", name_label: str = "", name_description: str = "") -> str:
-    """Modify VM properties (name_label and/or name_description)"""
-    logger.info("modify_vm called")
-    if not XOA_URL.strip() or not XOA_TOKEN.strip():
-        return "❌ Error: XOA_URL and XOA_TOKEN environment variables must be set"
-    if not str(vm_id).strip():
-        return "❌ Error: vm_id is required"
-    payload = {}
-    if str(name_label).strip():
-        payload["name_label"] = str(name_label).strip()
-    if str(name_description).strip():
-        payload["name_description"] = str(name_description).strip()
-    if not payload:
-        return "❌ Error: At least one of name_label or name_description must be provided"
-    vm_path = str(vm_id).strip()
-    if vm_path.startswith("/rest/v0/"):
-        vm_path = vm_path.replace("/rest/v0/", "")
-    if vm_path.startswith("/"):
-        vm_path = vm_path[1:]
+async def list_backups():
+    """List all backup jobs."""
+    logger.info("Fetching backups from Xen Orchestra")
     try:
-        async with _client() as client:
-            resp = await client.patch(f"/{vm_path}", json=payload)
-            resp.raise_for_status()
-            return f"✅ Success: VM updated\n- Updated fields: {', '.join(payload.keys())}"
-    except httpx.HTTPStatusError as e:
-        return f"❌ API Error: {e.response.status_code} - {e.response.text[:1000]}"
+        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(f"{XO_BASE_URL}/api/v1/backup-jobs", headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            backups = [f"- {b.get('name')} ({b.get('id')})" for b in data.get('data', [])]
+            return f"📊 Backups:\n" + "\n".join(backups) if backups else "📊 No backup jobs found."
     except Exception as e:
-        logger.error("modify_vm error", exc_info=True)
+        logger.error(f"Error listing backups: {e}")
         return f"❌ Error: {str(e)}"
+# Modify this to include filters, schedules, or status fields.
 
-@mcp.tool()
-async def list_backup_jobs(job_type: str = "jobs") -> str:
-    """List backup jobs (job_type controls path like 'jobs' or 'vm')"""
-    logger.info("list_backup_jobs called")
-    if not XOA_URL.strip() or not XOA_TOKEN.strip():
-        return "❌ Error: XOA_URL and XOA_TOKEN environment variables must be set"
-    jt = str(job_type).strip()
-    # Known endpoints seen in docs/forums: /backup/jobs and /backup/jobs/vm
-    path = "/backup"
-    if jt:
-        # safe join
-        path = f"/backup/{jt}" if not jt.startswith("/") else f"/backup{jt}"
-    try:
-        async with _client() as client:
-            resp = await client.get(path)
-            resp.raise_for_status()
-            data = resp.json()
-            out_lines = [f"📊 Backup jobs at {path}:"]
-            if isinstance(data, list):
-                for i, j in enumerate(data, start=1):
-                    if isinstance(j, dict):
-                        name = j.get("name", j.get("name_label", "<no name>"))
-                        jid = j.get("id", j.get("uuid", j.get("href", "")))
-                        out_lines.append(f"- {i}. {name} (id: {jid})")
-                    else:
-                        out_lines.append(f"- {i}. {j}")
-            else:
-                out_lines.append(f"⚠️ Unexpected response shape: {json.dumps(data)[:500]}")
-            return "\n".join(out_lines)
-    except httpx.HTTPStatusError as e:
-        return f"❌ API Error: {e.response.status_code} - {e.response.text[:1000]}"
-    except Exception as e:
-        logger.error("list_backup_jobs error", exc_info=True)
-        return f"❌ Error: {str(e)}"
-
-@mcp.tool()
-async def create_backup_job(payload: str = "") -> str:
-    """Create a backup job using a JSON payload under /backup/jobs"""
-    logger.info("create_backup_job called")
-    if not XOA_URL.strip() or not XOA_TOKEN.strip():
-        return "❌ Error: XOA_URL and XOA_TOKEN environment variables must be set"
-    if not str(payload).strip():
-        return "❌ Error: payload is required and must be a JSON string"
-    try:
-        body = json.loads(payload)
-    except Exception as e:
-        return f"❌ Error: payload is not valid JSON: {str(e)}"
-    try:
-        async with _client() as client:
-            resp = await client.post("/backup/jobs", json=body)
-            resp.raise_for_status()
-            data = resp.json()
-            return f"✅ Success: Backup job creation request accepted\n- Response: {json.dumps(data)[:1000]}"
-    except httpx.HTTPStatusError as e:
-        return f"❌ API Error: {e.response.status_code} - {e.response.text[:1000]}"
-    except Exception as e:
-        logger.error("create_backup_job error", exc_info=True)
-        return f"❌ Error: {str(e)}"
-
-@mcp.tool()
-async def delete_backup_job(job_id: str = "") -> str:
-    """Delete a backup job by id or href"""
-    logger.info("delete_backup_job called")
-    if not XOA_URL.strip() or not XOA_TOKEN.strip():
-        return "❌ Error: XOA_URL and XOA_TOKEN environment variables must be set"
-    if not str(job_id).strip():
-        return "❌ Error: job_id is required"
-    jid = str(job_id).strip()
-    if jid.startswith("/rest/v0/"):
-        jid = jid.replace("/rest/v0/", "")
-    if jid.startswith("/"):
-        jid = jid[1:]
-    # try to delete under backup/jobs/<id> as typical endpoint
-    try:
-        async with _client() as client:
-            # if user provided full path, use it; otherwise try backup/jobs/<id> then /backup/<id>
-            if "/" in jid and jid.startswith("backup"):
-                resp = await client.delete(f"/{jid}")
-            else:
-                resp = await client.delete(f"/backup/jobs/{jid}")
-            if resp.status_code in (200, 204):
-                return f"✅ Success: Backup job {job_id} deleted (HTTP {resp.status_code})"
-            else:
-                resp.raise_for_status()
-    except httpx.HTTPStatusError as e:
-        return f"❌ API Error: {e.response.status_code} - {e.response.text[:1000]}"
-    except Exception as e:
-        logger.error("delete_backup_job error", exc_info=True)
-        return f"❌ Error: {str(e)}"
-
-# Server startup
+# ================= Server Startup =================
 if __name__ == "__main__":
-    logger.info("Starting XenOrchMCP MCP server...")
-    if not XOA_URL.strip():
-        logger.warning("XOA_URL not set; set XOA_URL to your Xen Orchestra base URL (no trailing slash)")
-    if not XOA_TOKEN.strip():
-        logger.warning("XOA_TOKEN not set; set XOA_TOKEN to an authentication token from Xen Orchestra UI")
+    logger.info("Starting Xen Orchestra MCP server...")
+    # Optional: check for API token before running
+    if not API_TOKEN.strip():
+        logger.warning("XO_API_TOKEN not set. Some tools may fail.")
+
     try:
-        mcp.run(transport="stdio")
+        mcp.run(transport='stdio')
+        # Starts the MCP server using standard input/output transport.
+        # You can change transport to 'tcp' or 'websocket' if needed.
     except Exception as e:
         logger.error(f"Server error: {e}", exc_info=True)
         sys.exit(1)
+# Exits the program if server fails.
