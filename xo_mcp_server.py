@@ -45,14 +45,14 @@ def format_response(success, message):
 # It must return a string and have single-line docstrings.
 
 @mcp.tool()
-async def list_vms():
-    """List all VMs in Xen Orchestra."""
+async def list_running_vms():
+    """List all Running VMs in Xen Orchestra."""
     logger.info("Fetching VMs from Xen Orchestra")
     try:
         headers = {"Authorization": f"Bearer {API_TOKEN}"}
         # API authorization header. Change to 'Basic' if you use username/password auth.
         async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.get(f"{XO_BASE_URL}/api/v1/vms", headers=headers)
+            response = await client.get(f"{XO_BASE_URL}/rest/v0/vms?fields=name_label%2Cpower_state%2Cuuid&filter=power_state%3ARunning&limit=42", headers=headers)
             # Sends GET request to the Xen Orchestra API endpoint for VMs.
             response.raise_for_status()  # Raises exception if status code >=400
             data = response.json()  # Converts response body to JSON
@@ -110,7 +110,7 @@ async def list_backups():
     try:
         headers = {"Authorization": f"Bearer {API_TOKEN}"}
         async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.get(f"{XO_BASE_URL}/api/v1/backup-jobs", headers=headers)
+            response = await client.get(f"{XO_BASE_URL}rest/v0/backup-jobs?fields=name%2Cmode%2Ctype%2Cid&filter=type%3Abackup&limit=42", headers=headers)
             response.raise_for_status()
             data = response.json()
             backups = [f"- {b.get('name')} ({b.get('id')})" for b in data.get('data', [])]
@@ -123,7 +123,6 @@ async def list_backups():
 # ================= Server Startup =================
 if __name__ == "__main__":
     logger.info("Starting Xen Orchestra MCP server...")
-    # Optional: check for API token before running
     if not API_TOKEN.strip():
         logger.warning("XO_API_TOKEN not set. Some tools may fail.")
 
