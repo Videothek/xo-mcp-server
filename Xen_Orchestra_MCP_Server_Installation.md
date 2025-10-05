@@ -1,6 +1,6 @@
 # Section 2: Installation Instructions for the Xen Orchestra MCP Server
 
-Follow these steps to set up and run your custom MCP server for Xen Orchestra.
+Follow these steps to set up and run your custom MCP server for Xen Orchestra. (Outdated)
 
 ---
 
