@@ -48,7 +48,7 @@ docker mcp secret list
 mkdir -p ~/.docker/mcp/catalogs
 
 # Create or edit custom.yaml
-nano ~/.docker/mcp/catalogs/custom.yaml
+vim ~/.docker/mcp/catalogs/custom.yaml
 ```
 
 Add this entry to `custom.yaml`:
@@ -85,8 +85,7 @@ registry:
     metadata:
       category: automation
       tags:
-        - xen
-        - orchestra
+        - xen orchestra
         - vm
         - backup
       license: MIT
@@ -99,7 +98,7 @@ registry:
 
 ```bash
 # Edit registry file
-nano ~/.docker/mcp/registry.yaml
+vim ~/.docker/mcp/registry.yaml
 ```
 
 Add this entry under the existing `registry:` key:
