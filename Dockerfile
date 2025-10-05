@@ -20,7 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && apt-get purge -y --auto-remove && rm -rf /var/lib/apt/lists/*
 
 # Copy the server code
-COPY xo_mcp_server.py .
+COPY main.py .
+COPY config.py .
+COPY tools/*.py tools/
 
 # Create non-root user and ensure /app owned by that user
 RUN useradd -m -u 1000 mcpuser && \
@@ -30,4 +32,4 @@ RUN useradd -m -u 1000 mcpuser && \
 USER mcpuser
 
 # Default command to start the MCP server
-CMD ["python", "xo_mcp_server.py"]
+CMD ["python", "main.py"]
