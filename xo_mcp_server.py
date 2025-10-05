@@ -1,29 +1,13 @@
 #!/usr/bin/env python3
-# This shebang line tells the system to use Python 3 to run this script.
-# You can leave it as-is or change to a specific Python path if needed.
-
-"""
-Simple Xen Orchestra MCP Server - Manage VMs and Backups
-"""
-# Module docstring describing the purpose of the script. Keep it short and single-line for MCP compliance.
 
 import os
-# Provides access to environment variables and filesystem paths. Modify if you want to read configs from files or environment.
-
 import sys
-# Provides access to system-level functions, such as exiting the script or redirecting streams.
-
 import logging
-# Standard Python logging library. Used to print info, warning, and error messages to stderr.
-
 from datetime import datetime, timezone
-# Provides date and time utilities. Could be used for timestamps in logging or API calls.
-
 import httpx
 # HTTP client library used to make requests to Xen Orchestra API. You can swap for requests or aiohttp if preferred.
 
 from mcp.server.fastmcp import FastMCP
-# Imports the FastMCP server class, which is the backbone of an MCP server.
 
 # ================= Logging Configuration =================
 logging.basicConfig(
