@@ -1,7 +1,6 @@
 import logging
 import urllib.parse
 import httpx
-from mcp import FastMCP
 from config import XO_BASE_URL, API_TOKEN, httpx_verify, logger
 
 # ================= VM MCP Tools =================

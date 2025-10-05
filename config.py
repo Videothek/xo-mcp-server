@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 
 # ================= Logging Configuration =================
-# Central configuration for logging 
+# Central configuration for MCP Server and tools logging 
 
 logging.basicConfig(
     level=logging.INFO,  # Set logging level. Change to DEBUG for verbose output.
@@ -13,7 +13,7 @@ logging.basicConfig(
     stream=sys.stderr  # Logs are sent to standard error.
 )
 
-# Creates a logger specifically for this server. You can change the name.
+# Creates a logger for the MCP server and tools.
 logger = logging.getLogger("xo_mcp_server")
 
 
@@ -28,7 +28,7 @@ XO_API_TOKEN = os.environ.get("XO_API_TOKEN", "")
 XO_BASE_URL = os.environ.get("XO_BASE_URL", "http://localhost:80")
 
 
-# ================= Xen Orchestra SSL Configuration =================
+# ================= SSL Configuration =================
 # Configuration for SSL options of the httpx request.
 
 # Certificate verify option for the Xen Orchestra webserver
