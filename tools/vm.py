@@ -100,8 +100,8 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
         return f"❌ Error: {str(e)}"
 
 
-# ================= List VMs =================
-# List all VMs with fields depending on filters
+# ================= Create VM =================
+# Create a VM from a template
 async def create_vm(name: str = "", template_id: str = ""):
     """Create a new VM from a template."""
     if not name.strip() or not template_id.strip():
@@ -121,7 +121,8 @@ async def create_vm(name: str = "", template_id: str = ""):
 # Modify payload to include CPU, RAM, or disk parameters as needed.
 
 
-
+# ================= Delete VM =================
+# Delete a VM based on the id
 async def delete_vm(vm_id: str = ""):
     """Delete a VM by its ID."""
     if not vm_id.strip():
