@@ -12,9 +12,9 @@ from config import XO_BASE_URL, API_TOKEN, httpx_verify, logger
 # List all VMs with fields depending on filters
 async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | None = None, limit: int = 42):
 
-    # Tool description for the client
+    # Tool description
     """
-    List all VMs in Xen Orchestra, with dynamic fields and filters.
+    List all VMs in Xen Orchestra, with dynamic fields and filter.
 
     Parameters:
         fields: Optional[List[str]]
@@ -23,6 +23,21 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
             Key-value filters, e.g. {"power_state": "Running", "container": "Ares", "tags": "Critical"}.
         limit: Optional[int]
             Max number of results (default: 42).
+
+    Returns:
+        dict: {
+          "status": "success" or "failure",
+          "total": <number of VMs>,
+          "vms": [<VM objects>]
+        }
+
+    Returns on MCP Server failure:
+        dict: {
+          "status": "failure",
+          "type": "http-error" or "exception",
+          "status-code": "<http-status-code>",
+          "error-texts": "<error-text>"
+        }
     """
 
     # Logging output
@@ -57,27 +72,12 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
             response.raise_for_status()
             data = response.json()
 
-            # Initialize empty VM list
-            vms = []
-
-            # Iterate through all queried VMs
-            for vm in data.get("data", []):
-
-                # Extract the VMs name
-                name = vm.get("name_label", "Unnamed")
-
-                # Extract the VMs fields and join them to a string
-                vm_fields = ", ".join(f"{f}={vm.get(f)}" for f in fields if f in vm)
-
-                # Add the VM to the list
-                vms.append(f"- {name} ({vm_fields})")
-
-            if vms:
-                # Return the VMs to the client
-                return f"📊 Found {len(vms)} VMs:\n" + "\n".join(vms)
-            else:
-                # Return a response to the client
-                return "📊 No VMs found."
+            # Return MCP friendly list of information
+            return {
+                    "status": "success" if data.get("data") else "failure",
+                    "total": len(data.get("data", [])),
+                    "vms": data.get("data", [])
+            }
 
     
     # Error handling for http request failures
@@ -87,7 +87,12 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
         logger.error(f"HTTP Error: {e.response.status_code} - {e.response.text}")
 
         # Return an error code to the client if the http request fails
-        return f"❌ HTTP Error: {e.response.status_code} ({e.response.text})"
+        return {
+                "status": "failure",
+                "type": "http-error",
+                "status-code":  e.response.status_code,
+                "error-text": e.response.text
+        }
     
     
     # Error handling for exceptions
@@ -97,7 +102,11 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
         logger.error(f"Error listing VMs: {e}")
 
         # Return an error code to the client if an exception was raised
-        return f"❌ Error: {str(e)}"
+        return {
+                "status": "failure",
+                "type": "exception",
+                "error-text": str(e)
+        }
 
 
 # ================= Create VM =================

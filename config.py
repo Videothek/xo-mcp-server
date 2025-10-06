@@ -5,10 +5,17 @@ from datetime import datetime, timezone
 
 
 # ================= Logging Configuration =================
-# Central configuration for MCP Server and tools logging 
+# Central configuration for MCP Server and tools logging
+
+# Read log level from environment variable, default to INFO
+log_level_str = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+# Map string to logging level, fallback to INFO if invalid
+log_level = getattr(logging, log_level_str, logging.INFO)
+
 
 logging.basicConfig(
-    level=logging.INFO,  # Set logging level. Change to DEBUG for verbose output.
+    level=log_level,  # Set logging level.
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',  # Customize how logs appear.
     stream=sys.stderr  # Logs are sent to standard error.
 )
