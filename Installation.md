@@ -1,4 +1,4 @@
-# Section 2: Installation Instructions for the Xen Orchestra MCP Server
+# Section 2: Installation Instructions
 
 Follow these steps to set up and run your custom MCP server for Xen Orchestra. (Outdated)
 
@@ -25,7 +25,7 @@ docker build -t xo-mcp-server .
 
 ---
 
-## Step 3: Set Up Secrets (if needed)
+## Step 3: Set up Docker MCP secrets
 
 ```bash
 # Set the Xen Orchestra URL
@@ -46,7 +46,7 @@ docker mcp secret list
 
 ---
 
-## Step 4: Create Custom Catalog
+## Step 4: Create custom Docker MCP catalog
 
 
 ```bash
@@ -116,7 +116,7 @@ registry:
 
 ---
 
-## Step 5: Update Registry
+## Step 5: Update Docker MCP Registry
 
 ```bash
 Linux:
@@ -143,7 +143,7 @@ registry:
 ## Step 6: Configure Clients
 
 
-### Continue VS Code
+### Continue VS-Code
 
 Go to your Continue settings in VS Code:
 
@@ -224,7 +224,7 @@ Restart Claude Desktop
 
 ---
 
-## Step 8: Test Your Server
+## Step 8: Check that the MCP server is working
 
 ```bash
 # Verify that the xo-mcp-server appears in the list
