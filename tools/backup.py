@@ -1,7 +1,7 @@
 import logging
 import urllib.parse
 import httpx
-from config import XO_BASE_URL, API_TOKEN, httpx_verify, logger
+from config import XO_BASE_URL, XO_API_TOKEN, httpx_verify, logger
 
 # ================= Backup MCP Tools =================
 # Each MCP tool is a function decorated with @mcp.tool()
@@ -13,7 +13,7 @@ async def list_backups():
     """List all backup jobs."""
     logger.info("Fetching backups from Xen Orchestra")
     try:
-        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        headers = {"Authorization": f"Bearer {XO_API_TOKEN}"}
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(f"{XO_BASE_URL}rest/v0/backup-jobs?fields=name%2Cmode%2Ctype%2Cid&filter=type%3Abackup&limit=42", headers=headers)
             response.raise_for_status()

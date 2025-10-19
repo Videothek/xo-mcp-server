@@ -1,2 +1,3 @@
-mcp[cli]>=1.2.0
+mcp[cli]>=1.18.0
+pydantic
 httpx

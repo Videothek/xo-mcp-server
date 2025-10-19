@@ -41,8 +41,11 @@ XO_BASE_URL = os.environ.get("XO_BASE_URL", "http://localhost:80")
 # Certificate verify option for the Xen Orchestra webserver
 CERT_VERIFY = os.environ.get("CERT_VERIFY", "True").lower() == "true"
 
-# Certificate path to the self-signed certificate of the Xen ORchestra webserver
+# Certificate path to the self-signed certificate of the Xen Orchestra webserver
 CERT_PATH = os.environ.get("CERT_PATH", None)
+
+if CERT_PATH == '<UNKNOWN>':
+    CERT_PATH = None
 
 # Set the certificate verification parameter for the httpx requestes
 httpx_verify = CERT_PATH if CERT_PATH else CERT_VERIFY

@@ -1,7 +1,9 @@
 import logging
 import urllib.parse
 import httpx
-from config import XO_BASE_URL, API_TOKEN, httpx_verify, logger
+from typing import Annotated
+from pydantic import Field
+from config import XO_BASE_URL, XO_API_TOKEN, httpx_verify, logger
 
 # ================= VM MCP Tools =================
 # Each MCP tool is a function decorated with @mcp.tool()
@@ -10,34 +12,26 @@ from config import XO_BASE_URL, API_TOKEN, httpx_verify, logger
 
 # ================= List VMs =================
 # List all VMs with fields depending on filters
-async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | None = None, limit: int = 42):
+async def list_vms(fields: Annotated[list[str], Field(description="The fields for the VMs to include in the API response")] = None,
+                   filter: Annotated[dict[str, str], Field(description="Key-value filters to filter for VMs")] = None,
+                   limit: Annotated[int, Field(description="Max number of results (default: 42)")] = 42
+):
 
     # Tool description
     """
-    List all VMs in Xen Orchestra, with dynamic fields and filter.
+    List all VMs in Xen Orchestra, use filters and fields to customize the output.
+    Check the documentation of the API for infos on how to use the arguments: https://docs.xcp-ng.org/management/manage-at-scale/xo-api/
 
     Parameters:
-        fields: Optional[List[str]]
-            The fields to include in the API response. Example: ["name_label", "name_description", "power_state", "uuid", "tags", "os_version"]
-        filter: Optional[Dict[str, str]]
-            Key-value filters, e.g. {"power_state": "Running", "container": "Ares", "tags": "Critical"}.
-        limit: Optional[int]
-            Max number of results (default: 42).
-
-    Returns:
-        dict: {
-          "status": "success" or "failure",
-          "total": <number of VMs>,
-          "vms": [<VM objects>]
-        }
-
-    Returns on MCP Server failure:
-        dict: {
-          "status": "failure",
-          "type": "http-error" or "exception",
-          "status-code": "<http-status-code>",
-          "error-texts": "<error-text>"
-        }
+        - "name_label": VM name
+        - "name_description": VM description
+        - "uuid": VM UUID
+        - "tags": Tags assigned to VM
+        - "os_version": Operating system version
+        - "power_state": Filter for VMs in this state (Running, Halted)
+        - "container": The name of the Hypervisor where the VM is running on.
+        - "tags": The tags assigned to the VM
+    limit: Maximum number of results to return. Set to 999 to return all VMs.
     """
 
     # Logging output
@@ -46,15 +40,13 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
     try:
         # Set the Request headers
         headers = {
-            "Authorization": f"Bearer {API_TOKEN}",
-            "Accept": "application/json"
+            "Accept": "application/json",
+            "Cookie": f"authenticationToken={XO_API_TOKEN}"
         }
 
         # Set defaults if client didn't provide any
         if not fields:
             fields = ["name_label", "name_description", "power_state", "uuid"]
-        if not filter:
-            filter = {"power_state": "Running"}
 
         # Prepare URL Parameters
         fields_param = urllib.parse.quote(",".join(fields))
@@ -74,9 +66,9 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
 
             # Return MCP friendly list of information
             return {
-                    "status": "success" if data.get("data") else "failure",
-                    "total": len(data.get("data", [])),
-                    "vms": data.get("data", [])
+                    "status": "success" if data else "failure",
+                    "total": len(data),
+                    "vms": data
             }
 
     
@@ -91,7 +83,9 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
                 "status": "failure",
                 "type": "http-error",
                 "status-code":  e.response.status_code,
-                "error-text": e.response.text
+                "error-text": e.response.text,
+                "token-length": str(len(XO_API_TOKEN)),
+                "token-chars": str(XO_API_TOKEN[:5])
         }
     
     
@@ -105,7 +99,9 @@ async def list_vms(fields: list[str] | None = None, filter: dict[str, str] | Non
         return {
                 "status": "failure",
                 "type": "exception",
-                "error-text": str(e)
+                "error-text": str(e),
+                "url-called": str(url),
+                "httpx-verify": str(httpx_verify)
         }
 
 
@@ -118,7 +114,7 @@ async def create_vm(name: str = "", template_id: str = ""):
     logger.info(f"Creating VM: {name} from template {template_id}")
     try:
         payload = {"name_label": name, "template": template_id}
-        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        headers = {"Authorization": f"Bearer {XO_API_TOKEN}"}
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.post(f"{XO_BASE_URL}/api/v1/vms", headers=headers, json=payload)
             response.raise_for_status()
@@ -138,7 +134,7 @@ async def delete_vm(vm_id: str = ""):
         return "❌ Error: 'vm_id' is required"
     logger.info(f"Deleting VM: {vm_id}")
     try:
-        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        headers = {"Authorization": f"Bearer {XO_API_TOKEN}"}
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.delete(f"{XO_BASE_URL}/api/v1/vms/{vm_id}", headers=headers)
             response.raise_for_status()

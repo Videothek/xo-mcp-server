@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import logging
 import sys
-from mcp import FastMCP
+from mcp.server.fastmcp import FastMCP
 from tools import vm, backup
 from config import XO_BASE_URL, XO_API_TOKEN, logger
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     logger.info("Starting Xen Orchestra MCP server...")
 
     if not XO_API_TOKEN.strip():
-        logger.warning("XO_API_TOKEN not set. Some tools may fail.")
+        logger.warning(f"XO_API_TOKEN not set. Some tools may fail. Token: {XO_API_TOKEN}")
 
     try:
 
