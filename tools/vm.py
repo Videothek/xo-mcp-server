@@ -83,9 +83,7 @@ async def list_vms(fields: Annotated[list[str], Field(description="The fields fo
                 "status": "failure",
                 "type": "http-error",
                 "status-code":  e.response.status_code,
-                "error-text": e.response.text,
-                "token-length": str(len(XO_API_TOKEN)),
-                "token-chars": str(XO_API_TOKEN[:5])
+                "error-text": e.response.text
         }
     
     
@@ -99,9 +97,7 @@ async def list_vms(fields: Annotated[list[str], Field(description="The fields fo
         return {
                 "status": "failure",
                 "type": "exception",
-                "error-text": str(e),
-                "url-called": str(url),
-                "httpx-verify": str(httpx_verify)
+                "error-text": str(e)
         }
 
 
