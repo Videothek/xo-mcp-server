@@ -11,10 +11,11 @@ from config import XO_BASE_URL, XO_API_TOKEN, httpx_verify, logger
 
 
 # ================= List VMs =================
-# List all VMs with fields depending on filters
-async def list_vms(fields: Annotated[list[str], Field(description="The fields for the VMs to include in the API response")] = None,
-                   filter: Annotated[dict[str, str], Field(description="Key-value filters to filter for VMs")] = None,
-                   limit: Annotated[int, Field(description="Max number of results (default: 42)")] = 42
+# List all VMs with their {fields} depending on {filters}
+async def list_vms(
+    fields: Annotated[list[str], Field(description="The fields for the VMs to include in the API response")] = None,
+    filter: Annotated[dict[str, str], Field(description="Key-value filters to filter for VMs")] = None,
+    limit: Annotated[int, Field(description="Max number of results (default: 42)")] = 42
 ):
 
     # Tool description
@@ -22,15 +23,16 @@ async def list_vms(fields: Annotated[list[str], Field(description="The fields fo
     List all VMs in Xen Orchestra, use filters and fields to customize the output.
     Check the documentation of the API for infos on how to use the arguments: https://docs.xcp-ng.org/management/manage-at-scale/xo-api/
 
-    Parameters:
-        - "name_label": VM name
+    fields:
+        - "name_label":       VM name
         - "name_description": VM description
-        - "uuid": VM UUID
-        - "tags": Tags assigned to VM
-        - "os_version": Operating system version
-        - "power_state": Filter for VMs in this state (Running, Halted)
-        - "container": The name of the Hypervisor where the VM is running on.
-        - "tags": The tags assigned to the VM
+        - "uuid":             VM UUID
+        - "tags":             Tags assigned to VM
+        - "os_version":       Operating system version
+    filter:
+        - "power_state": Filter for VMs in this state [Running, Halted]
+        - "container":   The name of the Hypervisor where the VM is running on.
+        - "tags":        The tags assigned to the VM
     limit: Maximum number of results to return. Set to 999 to return all VMs.
     """
 

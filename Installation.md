@@ -218,9 +218,9 @@ Replace `[YOUR_HOME]` with:
 
 Restart Claude Desktop
 
-1. Quit Claude Desktop completely  
-2. Start Claude Desktop again  
-3. Your new tools should appear!  
+1. Quit Claude Desktop completely
+2. Start Claude Desktop again
+3. Your new tools should appear!
 
 ---
 

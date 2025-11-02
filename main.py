@@ -18,11 +18,14 @@ mcp = FastMCP("xo_mcp_server")
 
 # Register VM related functions as MCP tools.
 mcp.list_vms = mcp.tool()(vm.list_vms)
-mcp.create_vm = mcp.tool()(vm.create_vm)
+#mcp.create_vm = mcp.tool()(vm.create_vm)
 
 #Register Backup related functions as MCP tools.
-mcp.list_backups = mcp.tool()(backup.list_backups)
+mcp.list_backup_jobs = mcp.tool()(backup.list_backup_jobs)
+mcp.get_backup_job_details = mcp.tool()(backup.get_backup_job_details)
 
+mcp.list_backup_logs = mcp.tool()(backup.list_backup_logs)
+mcp.get_backup_log_details = mcp.tool()(backup.get_backup_log_details)
 
 # ================= Server Startup =================
 if __name__ == "__main__":
