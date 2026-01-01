@@ -106,7 +106,7 @@ async def list_backup_repositories(
 
 # ================= Get Backup Repository Details =================
 # List details for a backup repository
-async def get_backup_repositories_details(
+async def get_backup_repository_details(
     id: Annotated[str, Field(description="The id of the backup repository to list details for, use list_backup_repositories to get the id")] = None
 ):
 

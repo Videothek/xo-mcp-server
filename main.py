@@ -28,7 +28,7 @@ mcp.list_backup_logs = mcp.tool()(backup_logs.list_backup_logs)
 mcp.get_backup_log_details = mcp.tool()(backup_logs.get_backup_log_details)
 
 mcp.list_backup_repositories = mcp.tool()(backup_repo.list_backup_repositories)
-mcp.get_backup_repository_details = mcp.tool()(backup_repo.get_backup_repositories_details)
+mcp.get_backup_repository_details = mcp.tool()(backup_repo.get_backup_repository_details)
 
 # ================= Server Startup =================
 if __name__ == "__main__":
