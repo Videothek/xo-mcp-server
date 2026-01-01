@@ -2,7 +2,7 @@
 import logging
 import sys
 from mcp.server.fastmcp import FastMCP
-from tools import vm, backup
+from tools import vm, backup_jobs, backup_logs, backup_repo
 from config import XO_BASE_URL, XO_API_TOKEN, logger
 
 
@@ -21,11 +21,14 @@ mcp.list_vms = mcp.tool()(vm.list_vms)
 #mcp.create_vm = mcp.tool()(vm.create_vm)
 
 #Register Backup related functions as MCP tools.
-mcp.list_backup_jobs = mcp.tool()(backup.list_backup_jobs)
-mcp.get_backup_job_details = mcp.tool()(backup.get_backup_job_details)
+mcp.list_backup_jobs = mcp.tool()(backup_jobs.list_backup_jobs)
+mcp.get_backup_job_details = mcp.tool()(backup_jobs.get_backup_job_details)
 
-mcp.list_backup_logs = mcp.tool()(backup.list_backup_logs)
-mcp.get_backup_log_details = mcp.tool()(backup.get_backup_log_details)
+mcp.list_backup_logs = mcp.tool()(backup_logs.list_backup_logs)
+mcp.get_backup_log_details = mcp.tool()(backup_logs.get_backup_log_details)
+
+mcp.list_backup_repositories = mcp.tool()(backup_repo.list_backup_repositories)
+mcp.get_backup_repository_details = mcp.tool()(backup_repo.get_backup_repository_details)
 
 # ================= Server Startup =================
 if __name__ == "__main__":
