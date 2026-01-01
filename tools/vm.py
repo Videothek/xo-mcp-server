@@ -1,4 +1,3 @@
-import logging
 import urllib.parse
 import httpx
 from typing import Annotated
@@ -93,7 +92,7 @@ async def list_vms(
     except Exception as e:
 
         # Log an error code if an exception was raised
-        logger.error(f"Error listing VMs: {e}")
+        logger.error(f"Exception encountered while fetching the Xen Orchestra URL: {e}")
 
         # Return an error code to the client if an exception was raised
         return {
@@ -101,6 +100,7 @@ async def list_vms(
                 "type": "exception",
                 "error-text": str(e)
         }
+
 
 
 # ================= Create VM =================
