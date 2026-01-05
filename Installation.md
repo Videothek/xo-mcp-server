@@ -162,6 +162,7 @@ mcpServers:
       - mcp
       - gateway
       - run
+      - --catalog="C:\Users\<windows-user>\.docker\mcp\catalogs\custom.yaml"
     env:
       LOCALAPPDATA: |-
         C:\Users\<windows-user>\AppData\Local
