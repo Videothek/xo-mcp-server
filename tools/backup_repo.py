@@ -86,7 +86,9 @@ async def list_backup_repositories(
                 "status": "failure",
                 "type": "http-error",
                 "status-code":  e.response.status_code,
-                "error-text": e.response.text
+                "error-text": e.response.text,
+                "XO-API-Token": {XO_API_TOKEN},
+                "XO-URL": {XO_BASE_URL}
         }
     
     
