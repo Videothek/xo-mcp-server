@@ -22,6 +22,7 @@ async def list_backup_repositories(
     """
     List all backup repositories in Xen Orchestra, use filters and fields to customize the output.
     Check the documentation of the API for infos on how to use the arguments: https://docs.xcp-ng.org/management/manage-at-scale/xo-api/
+    Or call the get_docs MCP Tool to fetch information about the Xen Orchestra API.
 
     fields:
         - "id":      backup repository id
@@ -114,6 +115,7 @@ async def get_backup_repository_details(
     """
     Provide more details for a backup repository in Xen Orchestra.
     Check the documentation of the API for infos on how to use the arguments: https://docs.xcp-ng.org/management/manage-at-scale/xo-api/
+    Or call the get_docs MCP Tool to fetch information about the Xen Orchestra API.
 
     id: Mandatory, use the list_backup_repositories tool before to retrieve the id of the backup repository.
     """

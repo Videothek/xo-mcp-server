@@ -2,7 +2,7 @@
 import logging
 import sys
 from mcp.server.fastmcp import FastMCP
-from tools import vm, backup_jobs, backup_logs, backup_repo
+from tools import vm, backup_jobs, backup_logs, backup_repo, docs
 from config import XO_BASE_URL, XO_API_TOKEN, logger
 
 
@@ -15,6 +15,9 @@ mcp = FastMCP("xo_mcp_server")
 # ================= Register MCP Tools =================
 # Register the MCP tools from the submodule.
 # Each tool must be registered seperatly
+
+# Register Doc related functions as MCP tools.
+mcp.get_docs = mcp.tool()(docs.get_docs)
 
 # Register VM related functions as MCP tools.
 mcp.list_vms = mcp.tool()(vm.list_vms)

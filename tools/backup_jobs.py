@@ -22,6 +22,7 @@ async def list_backup_jobs(
     """
     List all backup jobs in Xen Orchestra, use filters and fields to customize the output.
     Check the documentation of the API for infos on how to use the arguments: https://docs.xcp-ng.org/management/manage-at-scale/xo-api/
+    Or call the get_docs MCP Tool to fetch information about the Xen Orchestra API.
 
     fields:
         - "name": backup job name
@@ -116,6 +117,7 @@ async def get_backup_job_details(
     """
     Provide more details for a backup job in Xen Orchestra, use filters and fields to customize the output.
     Check the documentation of the API for infos on how to use the arguments: https://docs.xcp-ng.org/management/manage-at-scale/xo-api/
+    Or call the get_docs MCP Tool to fetch information about the Xen Orchestra API.
 
     id: Mandatory, use the list_backup_jobs tool before to retrieve the id of the backup job.
     """
