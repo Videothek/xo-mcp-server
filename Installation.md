@@ -41,7 +41,7 @@ docker mcp secret set CERT_VERIFY="False"
 docker mcp secret set CERT_PATH="/path/to/your/ssl/cert.pem"
 
 # Verify secrets
-docker mcp secret list
+docker mcp secret ls
 ```
 
 ---
